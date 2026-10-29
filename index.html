@@ -92,6 +92,9 @@ select{width:100%;padding:13px 10px;border-radius:14px;border:1px solid var(--li
 .pvw img{display:block;max-width:100%;max-height:46vh;width:auto;height:auto;border-radius:12px}
 .sg{display:flex;flex-wrap:wrap;gap:10px}
 .hint{font-size:12.5px;color:var(--mut);margin:12px 0}
+.full{z-index:35}
+.full img{display:block;width:100%;height:auto;margin:10px 0;border-radius:14px;-webkit-touch-callout:default;-webkit-user-select:auto;user-select:auto}
+.pvw img{-webkit-touch-callout:default;-webkit-user-select:auto;user-select:auto}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);z-index:60;max-width:90vw;padding:11px 18px;border-radius:999px;background:var(--card);border:1px solid var(--gold);box-shadow:0 10px 30px var(--shadow);font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 footer{margin-top:28px;text-align:center;color:var(--mut);font-size:12px}
@@ -141,15 +144,18 @@ footer{margin-top:28px;text-align:center;color:var(--mut);font-size:12px}
   <div class="sg">
    <button class="btn pri" id="sn" type="button">📲 แชร์ผ่านเครื่อง</button>
    <button class="btn" id="ssv" type="button">💾 บันทึกภาพ</button>
-   <a class="btn" id="sfb" target="_blank" rel="noopener noreferrer">Facebook</a>
-   <a class="btn" id="sln" target="_blank" rel="noopener noreferrer">LINE</a>
-   <a class="btn" id="sx" target="_blank" rel="noopener noreferrer">X</a>
+   <button class="btn" id="sci" type="button">🖼️ คัดลอกภาพ</button>
+   <button class="btn" id="sfu" type="button">🔍 ดูภาพเต็ม</button>
+   <button class="btn" id="sln" type="button" data-k="ln">💬 LINE</button>
+   <button class="btn" id="sfb" type="button" data-k="fb">Facebook</button>
+   <button class="btn" id="sx" type="button" data-k="x">X</button>
    <button class="btn" id="scp" type="button">📋 คัดลอกข้อความ</button>
   </div>
-  <p class="hint">TikTok · Instagram · YouTube: กด "บันทึกภาพ" แล้วอัปโหลดเป็นโพสต์หรือสตอรี่ได้เลยค่ะ ถ้าบันทึกตรงไม่ได้ ให้กดค้างที่รูปเพื่อบันทึก</p>
+  <p class="hint">ส่งเข้า LINE พร้อมรูป: กด "แชร์ผ่านเครื่อง" แล้วเลือก LINE หรือกด "คัดลอกภาพ" แล้ววางในแชท · TikTok / Instagram / YouTube: กด "บันทึกภาพ" (หรือ "ดูภาพเต็ม" แล้วกดค้างที่รูป) แล้วอัปโหลดได้เลยค่ะ</p>
   <button class="btn" id="sc" type="button">ปิด</button>
  </div>
 </div>
+<div class="ovl full" id="fv" role="dialog" aria-modal="true" aria-label="ภาพดวงเต็ม"><div class="shs"><p class="hint" style="margin-top:0">กดค้างที่รูป แล้วเลือก "บันทึกรูปภาพ" หรือ "เพิ่มลงรูปภาพ" (หรือแคปหน้าจอ) แล้วนำไปโพสต์ได้เลยค่ะ</p><img id="fvi" alt="ภาพดวงของฉัน"><button class="btn" id="fvc" type="button">ปิด</button></div></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <footer>คำทำนายเพื่อความบันเทิงเท่านั้น · ใช้เป็นกำลังใจ ไม่ใช่คำตัดสินชีวิต · มาสคอต: เลดี้ชฎา</footer>
 </div>
@@ -227,7 +233,7 @@ function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);
 function star(c,x,y,R,fill,col){c.beginPath();for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,r=i%2?R*.45:R;c.lineTo(x+Math.cos(a)*r,y+Math.sin(a)*r)}c.closePath();if(fill){c.fillStyle=col;c.fill()}else{c.strokeStyle=col;c.lineWidth=2.5;c.globalAlpha=.55;c.stroke();c.globalAlpha=1}}
 function wrapTh(c,text,maxW,maxL){let segs;try{segs=[...new Intl.Segmenter("th",{granularity:"word"}).segment(text)].map(s=>s.segment)}catch(e){segs=text.split("")}
 const L=[];let cur="";for(const s of segs){if(c.measureText(cur+s).width>maxW&&cur){L.push(cur.trim());cur=s}else cur+=s}if(cur.trim())L.push(cur.trim());return L.slice(0,maxL)}
-async function makeCard(y,m,d,H){try{await Promise.all([document.fonts.load("800 70px Prompt"),document.fonts.load("700 30px Prompt"),document.fonts.load("500 30px Prompt")])}catch(e){}
+async function makeCard(y,m,d,H){try{await Promise.race([Promise.all([document.fonts.load("800 70px Prompt"),document.fonts.load("700 30px Prompt"),document.fonts.load("500 30px Prompt")]),new Promise(r=>setTimeout(r,1500))])}catch(e){}
 const W=1080,cv=document.createElement("canvas");cv.width=W;cv.height=H;const c=cv.getContext("2d"),K=H/1350,Y=v=>v*K,f=fort(y,m,d),tc=TC[f.sc-1],FF="Prompt,'Noto Sans Thai',sans-serif";
 let g=c.createLinearGradient(0,0,W,H);g.addColorStop(0,"#1b1040");g.addColorStop(.55,"#2c1760");g.addColorStop(1,"#120a2c");c.fillStyle=g;c.fillRect(0,0,W,H);
 g=c.createRadialGradient(W/2,Y(230),20,W/2,Y(230),560);g.addColorStop(0,"rgba(243,197,84,.38)");g.addColorStop(1,"rgba(243,197,84,0)");c.fillStyle=g;c.fillRect(0,0,W,H);
@@ -256,21 +262,33 @@ c.font="700 28px "+FF;c.fillStyle="#f3c554";c.fillText("#เลดี้ชฎ�
 async function getBlob(y,m,d,H){const k=y+"-"+m+"-"+d+"-"+H;if(BC.has(k))return BC.get(k);const cv=await makeCard(y,m,d,H),b=await new Promise(r=>cv.toBlob(r,"image/png"));if(b){if(BC.size>6)BC.delete(BC.keys().next().value);BC.set(k,b)}return b}
 function shareText(){const f=fort(sc.y,sc.m,sc.d);return "🔮 ดวงวัน"+DAYS[f.wd]+"ที่ "+sc.d+" "+MON[sc.m]+" "+(sc.y+543)+" ของฉัน: "+TI[f.sc-1]+" "+"★".repeat(f.sc)+"☆".repeat(5-f.sc)+"\n"+f.ov+"\n"+f.cats.map(x=>x.n+" "+"★".repeat(x.v)+"☆".repeat(5-x.v)).join(" · ")+"\nมาดูดวงตามวันเกิดกับเลดี้ชฎา 👉 "+SITE+"\n#เลดี้ชฎา #ดูดวงตามวันเกิด"}
 function fname(){return "lady-chada-fortune-"+sc.y+"-"+String(sc.m+1).padStart(2,"0")+"-"+String(sc.d).padStart(2,"0")+".png"}
-async function saveBlob(b){let dl=null;try{dl=typeof claude!=="undefined"?await claude.use("downloads"):null}catch(e){}if(!dl||!b)return"none";try{await dl.save({filename:fname(),data:b});return"ok"}catch(e){return e&&e.code==="declined"?"declined":"none"}}
-async function saveImg(d,fromSheet){sc={y:vy,m:vm,d};if(!fromSheet){SFX.snap();toast("กำลังสร้างภาพดวง...")}const b=await getBlob(sc.y,sc.m,sc.d,shH);const r=await saveBlob(b);
-if(r==="ok"){SFX.ok();toast("บันทึกภาพดวงแล้วค่ะ ✨")}else if(r==="none"){toast("บันทึกตรงไม่ได้ กดค้างที่รูปเพื่อบันทึกนะคะ");if(!fromSheet)openShare(d)}}
+function bkey(){return sc.y+"-"+sc.m+"-"+sc.d+"-"+shH}
+function b2d(b){return new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result);f.onerror=()=>r(null);f.readAsDataURL(b)})}
+async function saveBlob(b){let dl=null,code="no-cap";try{dl=typeof claude!=="undefined"?await claude.use("downloads"):null}catch(e){code="use-err"}if(!dl||!b)return{s:"none",code};try{await dl.save({filename:fname(),data:b});return{s:"ok"}}catch(e){const c=(e&&e.code)||"error";return{s:c==="declined"?"declined":"none",code:c}}}
+async function shareFile(b){try{const file=new File([b],fname(),{type:"image/png"});if(!navigator.share||!navigator.canShare||!navigator.canShare({files:[file]}))return false;await navigator.share({files:[file],title:"ดวงของฉัน | เลดี้ชฎา"});return true}catch(e){return !!(e&&e.name==="AbortError")}}
+let fvPrev=null;
+async function showFull(){const b=await getBlob(sc.y,sc.m,sc.d,shH),u=b&&await b2d(b);if(!u){toast("แสดงภาพไม่ได้ ลองใหม่อีกครั้งนะคะ");return}$("fvi").src=u;fvPrev=document.activeElement;$("fv").classList.add("on");$("fvc").focus()}
+function closeFull(){if(!$("fv").classList.contains("on"))return;$("fv").classList.remove("on");if(fvPrev&&fvPrev.focus)try{fvPrev.focus()}catch(e){}}
+async function saveImg(d,fromSheet){sc={y:vy,m:vm,d};SFX.snap();try{toast("กำลังสร้างภาพดวง...");const b=await getBlob(sc.y,sc.m,sc.d,shH);if(!b)throw new Error("สร้างภาพไม่ได้");const r=await saveBlob(b);
+if(r.s==="ok"){SFX.ok();toast("บันทึกภาพดวงแล้วค่ะ ✨");return}if(r.s==="declined")return;
+if(await shareFile(b))return;
+toast("บันทึกตรงไม่ได้ ("+r.code+") เปิดภาพเต็มให้แล้ว กดค้างที่รูปเพื่อบันทึกนะคะ");await showFull()}catch(e){toast("เกิดข้อผิดพลาด: "+((e&&(e.message||e.code))||e))}}
 let prevF2=null;
-function setLinks(){const t=encodeURIComponent(shareText()),u=encodeURIComponent(SITE);$("sfb").href="https://www.facebook.com/sharer/sharer.php?u="+u+"&quote="+t;$("sln").href="https://social-plugins.line.me/lineit/share?url="+u+"&text="+t;$("sx").href="https://twitter.com/intent/tweet?text="+t+"&url="+u}
-async function renderPreview(){const box=$("pvw");box.textContent="กำลังสร้างภาพ...";const b=await getBlob(sc.y,sc.m,sc.d,shH);if(!b){box.textContent="สร้างภาพไม่สำเร็จ ลองใหม่อีกครั้งนะคะ";return}if(shUrl)URL.revokeObjectURL(shUrl);shUrl=URL.createObjectURL(b);const im=document.createElement("img");im.alt="ภาพดวงของฉัน";im.src=shUrl;box.textContent="";box.appendChild(im)}
-function openShare(d){sc={y:vy,m:vm,d};SFX.snap();prevF2=document.activeElement;$("so").classList.add("on");$("sn").hidden=!navigator.share;setLinks();renderPreview();const bs=$("sc");bs.focus()}
+async function renderPreview(){const box=$("pvw");box.textContent="กำลังสร้างภาพ...";try{const b=await getBlob(sc.y,sc.m,sc.d,shH),u=b&&await b2d(b);if(!u){box.textContent="สร้างภาพไม่สำเร็จ ลองใหม่อีกครั้งนะคะ";return}const im=document.createElement("img");im.alt="ภาพดวงของฉัน";im.src=u;box.textContent="";box.appendChild(im)}catch(e){box.textContent="สร้างภาพไม่สำเร็จ ("+((e&&e.message)||"error")+")"}}
+function openShare(d){sc={y:vy,m:vm,d};SFX.snap();prevF2=document.activeElement;$("so").classList.add("on");$("sn").hidden=!navigator.share;renderPreview();$("sc").focus()}
 function closeShare(){if(!$("so").classList.contains("on"))return;$("so").classList.remove("on");if(prevF2&&prevF2.focus)try{prevF2.focus()}catch(e){}}
-async function nativeShare(){const b=await getBlob(sc.y,sc.m,sc.d,shH),data={title:"ดวงของฉัน | เลดี้ชฎา",text:shareText()};try{if(b){const file=new File([b],fname(),{type:"image/png"});if(navigator.canShare&&navigator.canShare({files:[file]})){data.files=[file]}}await navigator.share(data);SFX.ok()}catch(e){if(!e||e.name!=="AbortError")toast("เครื่องนี้แชร์ตรงไม่ได้ ลองปุ่มอื่นหรือบันทึกภาพก่อนนะคะ")}}
-async function copyText(){const t=shareText();try{await navigator.clipboard.writeText(t);SFX.ok();toast("คัดลอกข้อความแล้ว นำไปวางได้เลยค่ะ")}catch(e){const a=document.createElement("textarea");a.value=t;a.style.position="fixed";a.style.opacity="0";document.body.appendChild(a);a.select();let ok=false;try{ok=document.execCommand("copy")}catch(e2){}document.body.removeChild(a);if(ok){SFX.ok();toast("คัดลอกข้อความแล้ว นำไปวางได้เลยค่ะ")}else toast("คัดลอกไม่ได้ ลองเลือกข้อความเองนะคะ")}}
+async function nativeShare(){const b=BC.get(bkey())||await getBlob(sc.y,sc.m,sc.d,shH),data={title:"ดวงของฉัน | เลดี้ชฎา",text:shareText()};try{if(b){const file=new File([b],fname(),{type:"image/png"});if(navigator.canShare&&navigator.canShare({files:[file]}))data.files=[file]}await navigator.share(data);SFX.ok()}catch(e){if(!e||e.name!=="AbortError")toast("แชร์ตรงไม่ได้ ("+((e&&e.name)||"error")+") ลองปุ่มอื่นนะคะ")}}
+async function copyText(quiet){const t=shareText();let ok=false;try{await navigator.clipboard.writeText(t);ok=true}catch(e){const a=document.createElement("textarea");a.value=t;a.style.position="fixed";a.style.opacity="0";document.body.appendChild(a);a.select();try{ok=document.execCommand("copy")}catch(e2){}document.body.removeChild(a)}
+if(!quiet){if(ok){SFX.ok();toast("คัดลอกข้อความแล้ว นำไปวางได้เลยค่ะ")}else toast("คัดลอกไม่ได้ ลองเลือกข้อความเองนะคะ")}return ok}
+async function copyImg(){try{const b=await getBlob(sc.y,sc.m,sc.d,shH);await navigator.clipboard.write([new ClipboardItem({"image/png":b})]);SFX.ok();toast("คัดลอกภาพแล้ว ไปวางในแชท LINE ได้เลยค่ะ")}catch(e){toast("เครื่องนี้คัดลอกภาพไม่ได้ ใช้ 'ดูภาพเต็ม' แล้วกดค้างที่รูปแทนนะคะ")}}
+function socialUrl(k){const t=encodeURIComponent(shareText()),u=encodeURIComponent(SITE);return k==="ln"?"https://line.me/R/msg/text/?"+t:k==="fb"?"https://www.facebook.com/sharer/sharer.php?u="+u+"&quote="+t:"https://twitter.com/intent/tweet?text="+t}
+async function social(k){SFX.tap(3);let w=null;try{w=window.open(socialUrl(k),"_blank")}catch(e){}if(!w){const ok=await copyText(true);toast(ok?"เปิดแอพตรงไม่ได้ คัดลอกข้อความแล้ว เปิดแอพแล้ววางได้เลยค่ะ":"เปิดแอพตรงไม่ได้ ลองปุ่มแชร์ผ่านเครื่องแทนนะคะ")}}
 $("sc").onclick=()=>{SFX.close();closeShare()};$("so").addEventListener("click",e=>{if(e.target===$("so"))closeShare()});
-$("sn").onclick=nativeShare;$("ssv").onclick=()=>saveImg(sc.d,true);$("scp").onclick=copyText;
-["sfb","sln","sx"].forEach(i=>$(i).addEventListener("click",()=>SFX.tap(3)));
+$("fvc").onclick=closeFull;$("fv").addEventListener("click",e=>{if(e.target===$("fv"))closeFull()});
+$("sn").onclick=nativeShare;$("ssv").onclick=()=>saveImg(sc.d,true);$("scp").onclick=()=>copyText(false);$("sci").onclick=copyImg;$("sfu").onclick=showFull;
+["sln","sfb","sx"].forEach(i=>$(i).onclick=()=>social($(i).dataset.k));
 document.querySelectorAll(".fm .chip").forEach(b=>b.onclick=()=>{SFX.tap(1);shH=+b.dataset.h;document.querySelectorAll(".fm .chip").forEach(x=>x.setAttribute("aria-pressed",x===b));renderPreview()});
-document.addEventListener("keydown",e=>{if(!$("so").classList.contains("on"))return;if(e.key==="Escape")closeShare();if(e.key==="Tab"){const f=[...$("so").querySelectorAll("button,a[href]")].filter(x=>!x.hidden&&x.offsetParent!==null);if(!f.length)return;const i=f.indexOf(document.activeElement);if(e.shiftKey&&i<=0){e.preventDefault();f[f.length-1].focus()}else if(!e.shiftKey&&(i===f.length-1||i===-1)){e.preventDefault();f[0].focus()}}});
+document.addEventListener("keydown",e=>{const o=document.querySelector(".ovl.on:last-of-type")||document.querySelector(".ovl.on");if(!o)return;if(e.key==="Escape"){$("fv").classList.contains("on")?closeFull():closeShare()}if(e.key==="Tab"){const top=$("fv").classList.contains("on")?$("fv"):$("so"),f=[...top.querySelectorAll("button")].filter(x=>!x.hidden&&x.offsetParent!==null);if(!f.length)return;const i=f.indexOf(document.activeElement);if(e.shiftKey&&i<=0){e.preventDefault();f[f.length-1].focus()}else if(!e.shiftKey&&(i===f.length-1||i===-1)){e.preventDefault();f[0].focus()}}});
 /* ---------- init ---------- */
 $("go").onclick=()=>{SFX.tap(4);submit()};$("pv").onclick=()=>nav(-1);$("nx").onclick=()=>nav(1);
 const sb=$("snd");function sndUI(){sb.textContent=soundOn?"🔊":"🔇";sb.setAttribute("aria-label",soundOn?"ปิดเสียง":"เปิดเสียง")}
