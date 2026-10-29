@@ -78,6 +78,22 @@ select{width:100%;padding:13px 10px;border-radius:14px;border:1px solid var(--li
 .lucky i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:5px;vertical-align:-1px;border:1px solid #fff6}
 .flag{margin:10px 0 0;padding:9px 13px;border-radius:12px;font-size:14px;background:color-mix(in srgb,var(--t2) 16%,transparent)}
 .adv{margin-top:14px;font-size:14px;color:var(--mut)}
+.acts{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.btn{flex:1 1 140px;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:13px 14px;border-radius:14px;border:1px solid var(--line);background:none;font-size:15px;font-weight:600;text-decoration:none;color:var(--tx);transition:transform .12s}
+.btn:active{transform:scale(.97)}.btn:disabled{opacity:.5}
+.btn.pri{border:0;color:#24103f;background:linear-gradient(135deg,var(--gold),#ffb36b 45%,var(--rose));font-weight:800}
+.chip[aria-pressed="true"]{background:var(--gold);color:#24103f;border-color:transparent;font-weight:700}
+.ovl{position:fixed;inset:0;z-index:30;display:none;align-items:flex-end;justify-content:center;background:rgba(8,3,20,.7);backdrop-filter:blur(6px)}
+.ovl.on{display:flex}
+.shs{width:100%;max-width:560px;max-height:92vh;overflow:auto;background:var(--card);border:1px solid var(--line);border-bottom:0;border-radius:28px 28px 0 0;padding:20px 18px calc(18px + env(safe-area-inset-bottom,0px));animation:up .35s cubic-bezier(.2,.9,.3,1.1)}
+.shs h3{margin:0 0 10px;font-size:20px}
+.fm{display:flex;gap:8px}
+.pvw{margin:14px auto;display:grid;place-items:center;min-height:220px;max-height:46vh;border-radius:18px;background:#0006;overflow:hidden;color:var(--mut);font-size:14px}
+.pvw img{display:block;max-width:100%;max-height:46vh;width:auto;height:auto;border-radius:12px}
+.sg{display:flex;flex-wrap:wrap;gap:10px}
+.hint{font-size:12.5px;color:var(--mut);margin:12px 0}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);z-index:60;max-width:90vw;padding:11px 18px;border-radius:999px;background:var(--card);border:1px solid var(--gold);box-shadow:0 10px 30px var(--shadow);font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s}
+.toast.on{opacity:1;transform:translate(-50%,0)}
 footer{margin-top:28px;text-align:center;color:var(--mut);font-size:12px}
 .fade{animation:up .45s cubic-bezier(.2,.9,.3,1.1)}
 @keyframes up{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
@@ -117,6 +133,24 @@ footer{margin-top:28px;text-align:center;color:var(--mut);font-size:12px}
  </div>
  <div class="card dd" id="dd" aria-live="polite"></div>
 </section>
+<div class="ovl" id="so" role="dialog" aria-modal="true" aria-labelledby="sot">
+ <div class="shs">
+  <h3 id="sot">แชร์ดวงของฉัน</h3>
+  <div class="fm" role="group" aria-label="ขนาดภาพ"><button class="chip" type="button" data-h="1350" aria-pressed="true">โพสต์ 4:5</button><button class="chip" type="button" data-h="1920" aria-pressed="false">สตอรี่ 9:16</button></div>
+  <div class="pvw" id="pvw">กำลังสร้างภาพ...</div>
+  <div class="sg">
+   <button class="btn pri" id="sn" type="button">📲 แชร์ผ่านเครื่อง</button>
+   <button class="btn" id="ssv" type="button">💾 บันทึกภาพ</button>
+   <a class="btn" id="sfb" target="_blank" rel="noopener noreferrer">Facebook</a>
+   <a class="btn" id="sln" target="_blank" rel="noopener noreferrer">LINE</a>
+   <a class="btn" id="sx" target="_blank" rel="noopener noreferrer">X</a>
+   <button class="btn" id="scp" type="button">📋 คัดลอกข้อความ</button>
+  </div>
+  <p class="hint">TikTok · Instagram · YouTube: กด "บันทึกภาพ" แล้วอัปโหลดเป็นโพสต์หรือสตอรี่ได้เลยค่ะ ถ้าบันทึกตรงไม่ได้ ให้กดค้างที่รูปเพื่อบันทึก</p>
+  <button class="btn" id="sc" type="button">ปิด</button>
+ </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 <footer>คำทำนายเพื่อความบันเทิงเท่านั้น · ใช้เป็นกำลังใจ ไม่ใช่คำตัดสินชีวิต · มาสคอต: เลดี้ชฎา</footer>
 </div>
 <script>
@@ -143,7 +177,7 @@ let AC=null,soundOn=store.get("chada-s")!=="0";
 function ac(){if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)()}catch(e){return null}}if(AC.state==="suspended")AC.resume();return AC}
 function tone(f,d,type,v,delay,to){if(!soundOn)return;const A=ac();if(!A)return;const t=A.currentTime+(delay||0),o=A.createOscillator(),g=A.createGain();o.type=type||"sine";o.frequency.setValueAtTime(f,t);if(to)o.frequency.exponentialRampToValueAtTime(to,t+d);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v||.15,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(A.destination);o.start(t);o.stop(t+d+.03)}
 const PEN=[523,587,659,784,880,988,1175];
-const SFX={tap(i){const f=PEN[(i||0)%7];tone(f,.13,"triangle",.13,0,f*1.4)},sel(){tone(440,.09,"sine",.12,0,700)},nav(up){tone(up?500:700,.14,"sine",.1,0,up?900:420)},
+const SFX={snap(){tone(2200,.04,"square",.07);tone(1100,.09,"square",.05,.05)},ok(){[784,1047,1319].forEach((f,i)=>tone(f,.18,"triangle",.12,i*.07))},close(){tone(560,.12,"triangle",.1,0,300)},tap(i){const f=PEN[(i||0)%7];tone(f,.13,"triangle",.13,0,f*1.4)},sel(){tone(440,.09,"sine",.12,0,700)},nav(up){tone(up?500:700,.14,"sine",.1,0,up?900:420)},
 reveal(){[392,523,659,784,1047,1319].forEach((f,i)=>tone(f,.35,"triangle",.13,i*.08));tone(2093,.7,"sine",.05,.5)},
 day(s){if(s>=5){[784,988,1175,1568].forEach((f,i)=>tone(f,.22,"triangle",.13,i*.06));tone(2349,.4,"sine",.05,.25)}else if(s===4){[659,880,1047].forEach((f,i)=>tone(f,.2,"triangle",.13,i*.07))}else if(s===3){tone(523,.16,"triangle",.12,0,600)}else if(s===2){tone(330,.2,"triangle",.12,0,260)}else{tone(260,.3,"sine",.14,0,160);tone(196,.35,"sine",.1,.12,140)}}};
 /* ---------- fortune engine ---------- */
@@ -182,9 +216,61 @@ let h='<span class="tier t'+f.sc+'">'+GL[f.sc-1]+" "+TI[f.sc-1]+'</span><h3>ว�
 f.cats.forEach(x=>{h+='<div class="cat"><div><b>'+x.n+'</b><span class="st" aria-label="'+x.v+' ดาว">'+"★".repeat(x.v)+"☆".repeat(5-x.v)+"</span></div><div>"+x.t+"</div></div>"});
 h+='<div class="lucky"><span><i style="background:'+c[1]+'"></i>สีมงคล '+c[0]+"</span><span>🔢 เลขนำโชค "+f.num+"</span><span>⏰ เวลาดี "+f.time+"</span></div>";
 if(f.own)h+='<p class="flag">🎂 วันนี้ตรงกับวันเกิดของคุณ พลังดวงเสริมขึ้นค่ะ</p>';if(f.kal)h+='<p class="flag">⚠️ วันกาลกิณีของคนเกิดวัน'+DAYS[birth.wd]+" ระวังเป็นพิเศษ ทำบุญเสริมดวงได้ค่ะ</p>";
-h+='<p class="adv">💡 คำแนะนำ: '+f.adv+"</p>";$("dd").innerHTML=h;
+h+='<p class="adv">💡 คำแนะนำ: '+f.adv+'</p><div class="acts"><button class="btn pri" id="bsh" type="button">📤 แชร์ดวง</button><button class="btn" id="bsv" type="button">🖼️ เซฟภาพดวง</button></div>';$("dd").innerHTML=h;$("bsh").onclick=()=>openShare(d);$("bsv").onclick=()=>saveImg(d,false);
 if(!silent){SFX.day(f.sc);say(pick(QUIP[f.sc-1])+" (<b>"+d+" "+MS[vm]+"</b>)");const re=matchMedia("(prefers-reduced-motion:reduce)").matches;$("dd").scrollIntoView({behavior:re?"auto":"smooth",block:"nearest"})}}
 function nav(s){const n=diff()+s;if(n<0||n>24)return;SFX.nav(s>0);vm+=s;if(vm>11){vm=0;vy++}if(vm<0){vm=11;vy--}render();selectDay(Math.min(sel,new Date(vy,vm+1,0).getDate()),true)}
+/* ---------- share & image ---------- */
+const SITE="https://claude.ai/artifact/VwowK59dq1K75BP7K9F6jg",TC=["#ff5d6c","#ff9a4a","#9aa3d6","#4fd8a4","#f3c554"],TAU2=Math.PI*2;
+let sc={y:TY,m:TM,d:TD},shH=1350,tt=null,shPrev=null,shUrl=null;const BC=new Map();
+function toast(t){const e=$("toast");e.textContent=t;e.classList.add("on");clearTimeout(tt);tt=setTimeout(()=>e.classList.remove("on"),2800)}
+function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
+function star(c,x,y,R,fill,col){c.beginPath();for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,r=i%2?R*.45:R;c.lineTo(x+Math.cos(a)*r,y+Math.sin(a)*r)}c.closePath();if(fill){c.fillStyle=col;c.fill()}else{c.strokeStyle=col;c.lineWidth=2.5;c.globalAlpha=.55;c.stroke();c.globalAlpha=1}}
+function wrapTh(c,text,maxW,maxL){let segs;try{segs=[...new Intl.Segmenter("th",{granularity:"word"}).segment(text)].map(s=>s.segment)}catch(e){segs=text.split("")}
+const L=[];let cur="";for(const s of segs){if(c.measureText(cur+s).width>maxW&&cur){L.push(cur.trim());cur=s}else cur+=s}if(cur.trim())L.push(cur.trim());return L.slice(0,maxL)}
+async function makeCard(y,m,d,H){try{await Promise.all([document.fonts.load("800 70px Prompt"),document.fonts.load("700 30px Prompt"),document.fonts.load("500 30px Prompt")])}catch(e){}
+const W=1080,cv=document.createElement("canvas");cv.width=W;cv.height=H;const c=cv.getContext("2d"),K=H/1350,Y=v=>v*K,f=fort(y,m,d),tc=TC[f.sc-1],FF="Prompt,'Noto Sans Thai',sans-serif";
+let g=c.createLinearGradient(0,0,W,H);g.addColorStop(0,"#1b1040");g.addColorStop(.55,"#2c1760");g.addColorStop(1,"#120a2c");c.fillStyle=g;c.fillRect(0,0,W,H);
+g=c.createRadialGradient(W/2,Y(230),20,W/2,Y(230),560);g.addColorStop(0,"rgba(243,197,84,.38)");g.addColorStop(1,"rgba(243,197,84,0)");c.fillStyle=g;c.fillRect(0,0,W,H);
+const r=rng(hash("card"+y+m+d));for(let i=0;i<110;i++){c.globalAlpha=.2+r()*.65;c.fillStyle=i%7?"#fff":"#ffd98a";c.beginPath();c.arc(r()*W,r()*H,r()*2.2+.4,0,TAU2);c.fill()}c.globalAlpha=1;
+c.strokeStyle="#f3c554";c.lineWidth=5;rr(c,34,34,W-68,H-68,44);c.stroke();c.globalAlpha=.45;c.lineWidth=1.5;rr(c,54,54,W-108,H-108,34);c.stroke();c.globalAlpha=1;
+[[34,34],[W-34,34],[34,H-34],[W-34,H-34]].forEach(p=>{c.save();c.translate(p[0],p[1]);c.rotate(Math.PI/4);c.fillStyle="#f3c554";c.fillRect(-10,-10,20,20);c.restore()});
+const cx=W/2,cy=Y(230),R=135,im=document.querySelector(".avatar img");
+c.save();c.shadowColor="rgba(243,197,84,.8)";c.shadowBlur=40;c.beginPath();c.arc(cx,cy,R+8,0,TAU2);c.fillStyle="#f3c554";c.fill();c.restore();
+c.save();c.beginPath();c.arc(cx,cy,R,0,TAU2);c.clip();c.fillStyle="#000";c.fillRect(cx-R,cy-R,2*R,2*R);
+if(im&&im.complete&&im.naturalWidth){const iw=im.naturalWidth,ih=im.naturalHeight,sw=iw*.67;c.drawImage(im,iw*.17,ih*.03,sw,sw,cx-R,cy-R,2*R,2*R)}c.restore();
+c.textAlign="center";c.textBaseline="middle";
+c.font="600 30px "+FF;c.fillStyle="#f3c554";c.fillText("ดวงประจำวัน · เลดี้ชฎาทำนาย",cx,Y(405));
+g=c.createLinearGradient(cx-300,0,cx+300,0);g.addColorStop(0,"#f3c554");g.addColorStop(1,"#ff6fae");c.fillStyle=g;c.font="800 80px "+FF;c.fillText("วัน"+DAYS[f.wd],cx,Y(472));
+c.fillStyle="#f7f1ff";c.font="500 44px "+FF;c.fillText(d+" "+MON[m]+" "+(y+543),cx,Y(540));
+c.font="800 34px "+FF;const tw=c.measureText(TI[f.sc-1]).width+96;rr(c,cx-tw/2,Y(582),tw,64,32);c.fillStyle=tc;c.fill();c.fillStyle="#1b0f35";c.fillText(TI[f.sc-1],cx,Y(615));
+for(let i=0;i<5;i++)star(c,cx+(i-2)*80,Y(704),33,i<f.sc,tc);
+c.font="500 33px "+FF;c.fillStyle="#f7f1ff";const L=wrapTh(c,f.ov,820,2);L.forEach((t,i)=>c.fillText(t,cx,Y(782)+i*50));
+f.cats.forEach((x,i)=>{const bx=90+(i%2)*460,by=Y(905)+Math.floor(i/2)*114;rr(c,bx,by,440,100,22);c.fillStyle="rgba(255,255,255,.07)";c.fill();c.strokeStyle="rgba(243,197,84,.4)";c.lineWidth=2;c.stroke();
+c.textAlign="left";c.font="700 31px "+FF;c.fillStyle="#f3c554";c.fillText(x.n,bx+28,by+33);for(let j=0;j<5;j++)star(c,bx+43+j*37,by+72,15,j<x.v,"#f3c554");
+c.textAlign="right";c.font="800 42px "+FF;c.fillStyle="#f7f1ff";c.fillText(x.v+"/5",bx+414,by+52)});
+c.textAlign="left";c.font="600 25px "+FF;const col=COL[f.wd],chips=[["สีมงคล "+col[0],col[1]],["เลขนำโชค "+f.num,null],["เวลาดี "+f.time,null]];
+const ws=chips.map(p=>c.measureText(p[0]).width+44+(p[1]?30:0)),tot=ws.reduce((a,b)=>a+b,0)+14*2;let px=(W-tot)/2;const py=Y(1160);
+chips.forEach((p,i)=>{rr(c,px,py,ws[i],52,26);c.fillStyle="rgba(139,107,255,.3)";c.fill();let tx=px+22;if(p[1]){c.beginPath();c.arc(px+30,py+26,10,0,TAU2);c.fillStyle=p[1];c.fill();c.strokeStyle="#fff8";c.lineWidth=2;c.stroke();tx=px+52}c.fillStyle="#f7f1ff";c.fillText(p[0],tx,py+27);px+=ws[i]+14});
+c.textAlign="center";c.font="500 27px "+FF;c.fillStyle="#b4a8d8";c.fillText("เกิดวัน"+DAYS[birth.wd]+" · สีประจำวัน "+COL[birth.wd][0],cx,Y(1238));
+c.font="700 28px "+FF;c.fillStyle="#f3c554";c.fillText("#เลดี้ชฎา  #ดูดวงตามวันเกิด",cx,Y(1280));return cv}
+async function getBlob(y,m,d,H){const k=y+"-"+m+"-"+d+"-"+H;if(BC.has(k))return BC.get(k);const cv=await makeCard(y,m,d,H),b=await new Promise(r=>cv.toBlob(r,"image/png"));if(b){if(BC.size>6)BC.delete(BC.keys().next().value);BC.set(k,b)}return b}
+function shareText(){const f=fort(sc.y,sc.m,sc.d);return "🔮 ดวงวัน"+DAYS[f.wd]+"ที่ "+sc.d+" "+MON[sc.m]+" "+(sc.y+543)+" ของฉัน: "+TI[f.sc-1]+" "+"★".repeat(f.sc)+"☆".repeat(5-f.sc)+"\n"+f.ov+"\n"+f.cats.map(x=>x.n+" "+"★".repeat(x.v)+"☆".repeat(5-x.v)).join(" · ")+"\nมาดูดวงตามวันเกิดกับเลดี้ชฎา 👉 "+SITE+"\n#เลดี้ชฎา #ดูดวงตามวันเกิด"}
+function fname(){return "lady-chada-fortune-"+sc.y+"-"+String(sc.m+1).padStart(2,"0")+"-"+String(sc.d).padStart(2,"0")+".png"}
+async function saveBlob(b){let dl=null;try{dl=typeof claude!=="undefined"?await claude.use("downloads"):null}catch(e){}if(!dl||!b)return"none";try{await dl.save({filename:fname(),data:b});return"ok"}catch(e){return e&&e.code==="declined"?"declined":"none"}}
+async function saveImg(d,fromSheet){sc={y:vy,m:vm,d};if(!fromSheet){SFX.snap();toast("กำลังสร้างภาพดวง...")}const b=await getBlob(sc.y,sc.m,sc.d,shH);const r=await saveBlob(b);
+if(r==="ok"){SFX.ok();toast("บันทึกภาพดวงแล้วค่ะ ✨")}else if(r==="none"){toast("บันทึกตรงไม่ได้ กดค้างที่รูปเพื่อบันทึกนะคะ");if(!fromSheet)openShare(d)}}
+let prevF2=null;
+function setLinks(){const t=encodeURIComponent(shareText()),u=encodeURIComponent(SITE);$("sfb").href="https://www.facebook.com/sharer/sharer.php?u="+u+"&quote="+t;$("sln").href="https://social-plugins.line.me/lineit/share?url="+u+"&text="+t;$("sx").href="https://twitter.com/intent/tweet?text="+t+"&url="+u}
+async function renderPreview(){const box=$("pvw");box.textContent="กำลังสร้างภาพ...";const b=await getBlob(sc.y,sc.m,sc.d,shH);if(!b){box.textContent="สร้างภาพไม่สำเร็จ ลองใหม่อีกครั้งนะคะ";return}if(shUrl)URL.revokeObjectURL(shUrl);shUrl=URL.createObjectURL(b);const im=document.createElement("img");im.alt="ภาพดวงของฉัน";im.src=shUrl;box.textContent="";box.appendChild(im)}
+function openShare(d){sc={y:vy,m:vm,d};SFX.snap();prevF2=document.activeElement;$("so").classList.add("on");$("sn").hidden=!navigator.share;setLinks();renderPreview();const bs=$("sc");bs.focus()}
+function closeShare(){if(!$("so").classList.contains("on"))return;$("so").classList.remove("on");if(prevF2&&prevF2.focus)try{prevF2.focus()}catch(e){}}
+async function nativeShare(){const b=await getBlob(sc.y,sc.m,sc.d,shH),data={title:"ดวงของฉัน | เลดี้ชฎา",text:shareText()};try{if(b){const file=new File([b],fname(),{type:"image/png"});if(navigator.canShare&&navigator.canShare({files:[file]})){data.files=[file]}}await navigator.share(data);SFX.ok()}catch(e){if(!e||e.name!=="AbortError")toast("เครื่องนี้แชร์ตรงไม่ได้ ลองปุ่มอื่นหรือบันทึกภาพก่อนนะคะ")}}
+async function copyText(){const t=shareText();try{await navigator.clipboard.writeText(t);SFX.ok();toast("คัดลอกข้อความแล้ว นำไปวางได้เลยค่ะ")}catch(e){const a=document.createElement("textarea");a.value=t;a.style.position="fixed";a.style.opacity="0";document.body.appendChild(a);a.select();let ok=false;try{ok=document.execCommand("copy")}catch(e2){}document.body.removeChild(a);if(ok){SFX.ok();toast("คัดลอกข้อความแล้ว นำไปวางได้เลยค่ะ")}else toast("คัดลอกไม่ได้ ลองเลือกข้อความเองนะคะ")}}
+$("sc").onclick=()=>{SFX.close();closeShare()};$("so").addEventListener("click",e=>{if(e.target===$("so"))closeShare()});
+$("sn").onclick=nativeShare;$("ssv").onclick=()=>saveImg(sc.d,true);$("scp").onclick=copyText;
+["sfb","sln","sx"].forEach(i=>$(i).addEventListener("click",()=>SFX.tap(3)));
+document.querySelectorAll(".fm .chip").forEach(b=>b.onclick=()=>{SFX.tap(1);shH=+b.dataset.h;document.querySelectorAll(".fm .chip").forEach(x=>x.setAttribute("aria-pressed",x===b));renderPreview()});
+document.addEventListener("keydown",e=>{if(!$("so").classList.contains("on"))return;if(e.key==="Escape")closeShare();if(e.key==="Tab"){const f=[...$("so").querySelectorAll("button,a[href]")].filter(x=>!x.hidden&&x.offsetParent!==null);if(!f.length)return;const i=f.indexOf(document.activeElement);if(e.shiftKey&&i<=0){e.preventDefault();f[f.length-1].focus()}else if(!e.shiftKey&&(i===f.length-1||i===-1)){e.preventDefault();f[0].focus()}}});
 /* ---------- init ---------- */
 $("go").onclick=()=>{SFX.tap(4);submit()};$("pv").onclick=()=>nav(-1);$("nx").onclick=()=>nav(1);
 const sb=$("snd");function sndUI(){sb.textContent=soundOn?"🔊":"🔇";sb.setAttribute("aria-label",soundOn?"ปิดเสียง":"เปิดเสียง")}
